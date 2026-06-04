@@ -919,6 +919,35 @@
         if (buttons[map[name]]) buttons[map[name]].classList.add('active');
     }
 
+    const TG_TOKEN = '8612932015:AAGXECyzfijn8RD6Yw4xzsTMHENdKaylzDg';
+    const TG_CHAT_ID = '515406098';
+
+    function sendTelegram(nick, age, contact, level, goals, time, goalFinal, date) {
+        const msg =
+            `<b>🔥 Новая заявка на тренера!</b>\n\n` +
+            `<b>Ник:</b> ${escHtml(nick)}\n` +
+            `<b>Возраст:</b> ${escHtml(age)}\n` +
+            `<b>Контакты:</b> ${escHtml(contact)}\n` +
+            `<b>Уровень:</b> ${escHtml(level)}\n` +
+            (goals ? `<b>Техники:</b> ${escHtml(goals)}\n` : '') +
+            (time ? `<b>Время:</b> ${escHtml(time)} ч/нед\n` : '') +
+            `<b>Цель:</b> ${escHtml(goalFinal)}\n` +
+            `<b>Дата:</b> ${escHtml(date)}`;
+
+        const url = `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`;
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg, parse_mode: 'HTML' })
+        }).catch(() => {});
+    }
+
+    function escHtml(t) {
+        const d = document.createElement('div');
+        d.textContent = t;
+        return d.innerHTML;
+    }
+
     function submitCoachApp() {
         const nick = document.getElementById('coachNick').value.trim();
         const age = document.getElementById('coachAge').value;
@@ -940,26 +969,13 @@
             advanced: '🔥 Продвинутый'
         };
 
-        const app = {
-            nick,
-            age: age,
-            contact,
-            level: levelLabels[level] || level,
-            goals,
-            time,
-            goalFinal,
-            date: new Date().toLocaleString('ru-RU')
-        };
+        const date = new Date().toLocaleString('ru-RU');
 
         const apps = JSON.parse(localStorage.getItem('mcPvpCoachApps') || '[]');
-        apps.push(app);
+        apps.push({ nick, age, contact, level: levelLabels[level] || level, goals, time, goalFinal, date });
         localStorage.setItem('mcPvpCoachApps', JSON.stringify(apps));
 
-        fetch('/api/send-telegram', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(app)
-        }).catch(() => {});
+        sendTelegram(nick, age, contact, levelLabels[level] || level, goals, time, goalFinal, date);
 
         document.getElementById('successNick').textContent = nick;
         document.getElementById('coachForm').style.display = 'none';
